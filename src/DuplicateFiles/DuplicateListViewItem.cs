@@ -11,6 +11,7 @@
 			Files = [fileRef];
 			Text = fileRef.Name;
 
+			SubItems.AddRange("1");
 			SubItems.AddRange($"{fileRef.FileInfo.Length:#,##0}");
 			SubItems.AddRange("");
 		}
@@ -55,8 +56,22 @@
 		{
 			Files.Add(file);
 
+			SubItems[1].Text = Files.Count.ToString("#,##0");
+
 			if (file.Name != Text)
-				SubItems[2].Text = @"multiple names";
+				SubItems[3].Text = @"multiple names";
+		}
+
+		internal void Remove(FileRef file)
+		{
+			Files.Remove(file);
+			SubItems[1].Text = Files.Count.ToString("#,##0");
+		
+			if (Files.Count == 0)
+				return;
+
+			if (Files.All(f => f.Name == Text))
+				SubItems[3].Text = "";
 		}
 	}	
 }

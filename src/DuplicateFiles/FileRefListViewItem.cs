@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace DuplicateFiles
+﻿namespace DuplicateFiles
 {
 	internal class FileRefListViewItem : ListViewItem
 	{
@@ -16,8 +12,9 @@ namespace DuplicateFiles
 			
 			this.IndentCount = 1;
 
-			SubItems.AddRange($"{fileRef.FileInfo.Length:#,##0}");
-			SubItems.Add(fileRef.FileInfo.FullName);			
+			SubItems.Add("");
+			SubItems.Add($"{fileRef.FileInfo.Length:#,##0}");
+			SubItems.Add(fileRef.FileInfo.FullName).Name="FullPath";
 		}
 
 		public DuplicateListViewItem Parent { get; }
