@@ -197,6 +197,7 @@ namespace DuplicateFiles
 			if (hitInfo.Item is DuplicateListViewItem duplicateItem)
 			{
 				duplicateItem.Expanded = !duplicateItem.Expanded;
+				filesListView.AutoResizeColumn(3, ColumnHeaderAutoResizeStyle.ColumnContent);
 			}
 			else if (hitInfo.Item is FileRefListViewItem fileRefItem)
 			{
@@ -297,12 +298,24 @@ namespace DuplicateFiles
 			ignoreCommand.Enabled = anyFileRefs || anyDuplicates;
 			ignoreCommand.Enabled = anyFileRefs && !anyDuplicates;
 			deleteCommand.Enabled = anyFileRefs && !anyDuplicates;
+
 			openCommand.Enabled = anyFileRefs && !anyDuplicates;
 			openFolderCommand.Enabled = anyFileRefs && !anyDuplicates;
 
 			var multipleFileRefs = filesListView.SelectedItems.OfType<FileRefListViewItem>().GroupBy(f => f.Parent).Any(g => g.Count() > 1);
 
 			keepCommand.Enabled = anyFileRefs && !anyDuplicates && !multipleFileRefs;
+
+			var folders = filesListView.SelectedItems.OfType<FileRefListViewItem>()
+				.Select(f => f.FileRef.FileInfo.Directory?.FullName)
+				.ToHashSet();
+
+			var completeRemoved = filesListView.Items.OfType<DuplicateListViewItem>()
+				.Any(d => d.Files.All(f => f.FileInfo.Directory != null && folders.Contains(f.FileInfo.Directory.FullName)));
+
+			ignoreFolderCommand.Enabled = anyFileRefs && !anyDuplicates;
+			keepFolderCommand.Enabled = anyFileRefs && !anyDuplicates;
+			deleteFolderCommand.Enabled = anyFileRefs && !anyDuplicates && !completeRemoved;
 		}
 
 		private void DeleteCommandClick(object sender, EventArgs e)
@@ -316,7 +329,7 @@ namespace DuplicateFiles
 			{
 				try
 				{
-					FileSystem.DeleteFile(fileRef.FullPath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+					DeleteFile(fileRef.FullPath);
 					Remove(fileRef);
 				}
 				catch (Exception)
@@ -376,7 +389,7 @@ namespace DuplicateFiles
 				{
 					foreach (var fileRef in keep.Parent.Files.Where(f => f != keep.FileRef))
 					{
-						FileSystem.DeleteFile(fileRef.FileInfo.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+						DeleteFile(fileRef.FileInfo.FullName);
 					}
 					Remove(keep.Parent);
 				}
@@ -386,7 +399,7 @@ namespace DuplicateFiles
 			}
 		}
 
-		private void IgnoreFolderCommandClick(object sender, EventArgs e)
+		private void RemoveFolders(Action<FileRefListViewItem> action1, Action<DuplicateListViewItem, FileRef> action2)
 		{
 			var folders = filesListView.SelectedItems
 				.OfType<FileRefListViewItem>()
@@ -400,7 +413,7 @@ namespace DuplicateFiles
 			{
 				if (fileItem.FileRef.FileInfo.Directory != null && folders.Contains(fileItem.FileRef.FileInfo.Directory.FullName))
 				{
-					Remove(fileItem);
+					action1(fileItem);
 				}
 			}
 
@@ -409,18 +422,63 @@ namespace DuplicateFiles
 			foreach (var duplicate in filesListView.Items.OfType<DuplicateListViewItem>().Where(d => !d.Expanded))
 			{
 				var removeRefs = duplicate.Files
-					.Where(f => f.FileInfo.Directory!=null && folders.Contains(f.FileInfo.Directory.FullName))
+					.Where(f => f.FileInfo.Directory != null && folders.Contains(f.FileInfo.Directory.FullName))
 					.ToArray();
 
 				foreach (var fileRef in removeRefs)
 				{
-					duplicate.Remove(fileRef);
-					if (duplicate.Files.Count < 2)
-					{
-						Remove(duplicate);
-					}
+					action2(duplicate, fileRef);
 				}
 			}
 		}
+
+		private void IgnoreFolderCommandClick(object sender, EventArgs e)
+		{
+			RemoveFolders(
+				f => {
+					Remove(f);
+				},
+				(d, f) =>
+				{
+					d.Remove(f);
+					if (d.Files.Count < 2)
+					{
+						Remove(d);
+					}
+				});
+		}
+
+		private void KeepFolderCommandClick(object sender, EventArgs e)
+		{
+		}
+
+		private void DeleteFolderCommandClick(object sender, EventArgs e)
+		{
+			var count = 0;
+
+			RemoveFolders(
+				f => count++,
+				(d, f) => count++);
+
+			var result = MsgBox.Show(this, $"Are you sure you want to delete the {count:#,##0} selected file(s)?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+			if (result != DialogResult.Yes) return;
+
+			RemoveFolders(
+				f => {
+					DeleteFile(f.FileRef.FileInfo.FullName);
+					Remove(f);
+				},
+				(d, f) =>
+				{
+					DeleteFile(f.FileInfo.FullName);
+					d.Remove(f);
+					if (d.Files.Count < 2)
+					{
+						Remove(d);
+					}
+				});
+		}
+
+		private void DeleteFile(string filname) => FileSystem.DeleteFile(filname, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 	}
 }
