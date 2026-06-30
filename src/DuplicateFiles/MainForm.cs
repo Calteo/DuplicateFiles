@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using DuplicateFiles.Comparers;
+using DuplicateFiles.Forms;
 using Microsoft.VisualBasic.FileIO;
 using Toolbox.Collection.Generics;
 using Toolbox.Forms;
@@ -17,6 +18,181 @@ namespace DuplicateFiles
 			InitializeComponent();
 
 			SortFilesListView(0, true);
+
+			contextMenuStrip.Items.AddRange(
+				new ExecutableMenuItem<string[]>("Open", PrepareOpen, ExecuteOpen),
+				new ExecutableMenuItem<string[]>("Open Folder", PrepareOpenFolder, ExecuteOpenFolder),
+				new ToolStripSeparator(),
+				new ExecutableMenuItem<ListViewItem[]>("Ignore", PrepareIgnore, ExecuteIgnore),
+				new ExecutableMenuItem<FileRefListViewItem[]>("Keep", PrepareKeep, ExecuteKeep),
+				new ExecutableMenuItem<FileRefListViewItem[]>("Delete", PrepareDelete, ExecuteDelete),
+				new ToolStripSeparator(),
+				new ExecutableMenuItem<ListViewItem[]>("Ignore folder", PrepareIgnoreFolder, ExecuteIgnoreFolder),
+				new ExecutableMenuItem<FileRefListViewItem[]>("Keep folder", PrepareKeepFolder, ExecuteKeepFolder),
+				new ExecutableMenuItem<FileRefListViewItem[]>("Delete folder", PrepareDeleteFolder, ExecuteDeleteFolder)
+				);
+		}
+
+		private bool PrepareDeleteFolder(out FileRefListViewItem[]? data)
+		{
+			data = null;
+			return false;
+		}
+
+		private void ExecuteDeleteFolder(FileRefListViewItem[] obj)
+		{
+			throw new NotImplementedException();
+		}
+
+		private bool PrepareKeepFolder(out FileRefListViewItem[]? data)
+		{
+			data = null;
+			return false;
+		}
+
+		private void ExecuteKeepFolder(FileRefListViewItem[] obj)
+		{
+			throw new NotImplementedException();
+		}
+
+		private bool PrepareIgnoreFolder(out ListViewItem[]? data)
+		{
+			data = [.. filesListView.SelectedItems.OfType<ListViewItem>()];
+			return data.Length > 0;
+		}
+
+		private void ExecuteIgnoreFolder(ListViewItem[] items)
+		{
+			ExecuteOnFolder(items,
+				f => Remove(f),
+				(d, f) =>
+				{
+					d.Remove(f);
+					if (d.Files.Count < 2)
+					{
+						Remove(d);
+					}
+				}
+				);
+		}
+
+		private bool PrepareDelete(out FileRefListViewItem[]? data)
+		{
+			var byDuplicates = filesListView.SelectedItems.OfType<FileRefListViewItem>()
+				.GroupBy(f => f.Parent)
+				.Where(g => g.Count()!=g.Key.Files.Count);
+
+			data = [.. byDuplicates.SelectMany(g => g)];
+			return data.Length > 0;
+		}
+
+		private void ExecuteDelete(FileRefListViewItem[] items)
+		{
+			var result = MsgBox.Show(this, $"Are you sure you want to delete the {items.Length:#,##0} selected file(s)?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+			if (result != DialogResult.Yes) return;
+
+			foreach (var item in items)
+			{
+				try
+				{
+					DeleteFile(item.FullPath);
+					Remove(item);
+				}
+				catch (Exception exception)
+				{
+					MsgBox.Show(this, $"Failed to delete '{item.FullPath}'", "Deleting files", MessageBoxButtons.OK, MessageBoxIcon.Error, exception.ToString());
+				}
+			}			
+		}
+
+		private bool PrepareKeep(out FileRefListViewItem[]? data)
+		{
+			var fileRefs = filesListView.SelectedItems.OfType<FileRefListViewItem>().GroupBy(f => f.Parent);
+			data = fileRefs.Where(g => g.Count() == 1).Select(g => g.First()).ToArray();
+			return data.Length > 0;
+		}
+
+		private void ExecuteKeep(FileRefListViewItem[] items)
+		{
+			var duplicates = items.Select(f => f.Parent).ToArray();
+
+			var fileRefsCount = duplicates.SelectMany(d => d.Files).Except(items.Select(f => f.FileRef)).Count();
+
+			var result = MsgBox.Show(this, $"Are you sure you want to delete the {fileRefsCount:#,##0} selected file(s)?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+			if (result != DialogResult.Yes) return;
+
+			foreach (var item in items)
+			{
+				try
+				{
+					foreach (var fileRef in item.Parent.Files.Where(f => f != item.FileRef))
+					{
+						DeleteFile(fileRef.FileInfo.FullName);
+					}
+					Remove(item.Parent);
+				}
+				catch (Exception exception)
+				{
+					MsgBox.Show(this, exception.Message, $"Deleting files for keeping '{item.Name}'.", MessageBoxButtons.OK, MessageBoxIcon.Error, exception.ToString());
+				}
+			}
+		}
+
+		private bool PrepareIgnore(out ListViewItem[]? data)
+		{
+			data = [.. filesListView.SelectedItems.OfType<ListViewItem>()];
+			return data.Length > 0;
+		}
+
+		private void ExecuteIgnore(ListViewItem[] items)
+		{
+			Remove(items);
+		}
+
+		private bool PrepareOpenFolder(out string[]? data)
+		{
+			data = [.. filesListView.SelectedItems.OfType<FileRefListViewItem>().Select(f => f.FullPath)];
+
+			return data.Length > 0;
+		}
+
+		private void ExecuteOpenFolder(string[] files)
+		{
+			foreach (var file in files)
+			{
+				try
+				{
+					if (File.Exists(file))
+					{
+						Process.Start("explorer.exe", $"/select,\"{file}\""); // open folder and select file
+					}
+				}
+				catch (Exception ex)
+				{
+					MsgBox.Show(this, $"Failed to open directory for '{file}'.\n\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				}
+			}
+		}
+
+		private bool PrepareOpen(out string[]? data)
+		{
+			data = [.. filesListView.SelectedItems.OfType<FileRefListViewItem>().Select(f => f.FullPath)];
+			return data.Length > 0;
+		}
+
+		private void ExecuteOpen(string[] files)
+		{
+			foreach (var file in files)
+			{
+				try
+				{
+					Process.Start(new ProcessStartInfo(file) { UseShellExecute = true });
+				}
+				catch (Exception ex)
+				{
+					MsgBox.Show(this, $"Failed to open file '{file}'.\n\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				}
+			}
 		}
 
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -227,6 +403,7 @@ namespace DuplicateFiles
 
 		private int SortColumnIndex { get; set; } = -1;
 		private bool SortOrderAscending { get; set; } = true;
+
 		private void SortFilesListView(int columnIndex, bool ascending)
 		{
 			ListViewComparer comparer = columnIndex switch
@@ -251,8 +428,6 @@ namespace DuplicateFiles
 
 			filesListView.Columns[SortColumnIndex].Text += ascending ? " ▲" : " ▼";
 		}
-
-		private void IgnoreCommandClick(object sender, EventArgs e) => Remove(filesListView.SelectedItems.Cast<ListViewItem>());
 
 		private void Remove(IEnumerable<ListViewItem> items)
 		{
@@ -292,111 +467,41 @@ namespace DuplicateFiles
 
 		private void ContextMenuStripOpening(object sender, CancelEventArgs e)
 		{
-			var anyFileRefs = filesListView.SelectedItems.OfType<FileRefListViewItem>().Any();
-			var anyDuplicates = filesListView.SelectedItems.OfType<DuplicateListViewItem>().Any();
+			foreach (var command in contextMenuStrip.Items.OfType<IExecutableMenuItem>())
+				command.Prepare();
+		}
 
-			ignoreCommand.Enabled = anyFileRefs || anyDuplicates;
-			ignoreCommand.Enabled = anyFileRefs && !anyDuplicates;
-			deleteCommand.Enabled = anyFileRefs && !anyDuplicates;
-
-			openCommand.Enabled = anyFileRefs && !anyDuplicates;
-			openFolderCommand.Enabled = anyFileRefs && !anyDuplicates;
-
-			var multipleFileRefs = filesListView.SelectedItems.OfType<FileRefListViewItem>().GroupBy(f => f.Parent).Any(g => g.Count() > 1);
-
-			keepCommand.Enabled = anyFileRefs && !anyDuplicates && !multipleFileRefs;
-
-			var folders = filesListView.SelectedItems.OfType<FileRefListViewItem>()
+		private void ExecuteOnFolder(IEnumerable<ListViewItem> items, Action<FileRefListViewItem> fileRefAction, Action<DuplicateListViewItem, FileRef> duplicateFileRefAction)
+		{
+			var folders = items
+				.OfType<FileRefListViewItem>()
 				.Select(f => f.FileRef.FileInfo.Directory?.FullName)
+				.Where(d => d != null)
 				.ToHashSet();
 
-			var completeRemoved = filesListView.Items.OfType<DuplicateListViewItem>()
-				.Any(d => d.Files.All(f => f.FileInfo.Directory != null && folders.Contains(f.FileInfo.Directory.FullName)));
+			filesListView.BeginUpdate();
 
-			ignoreFolderCommand.Enabled = anyFileRefs && !anyDuplicates;
-			keepFolderCommand.Enabled = anyFileRefs && !anyDuplicates;
-			deleteFolderCommand.Enabled = anyFileRefs && !anyDuplicates && !completeRemoved;
-		}
-
-		private void DeleteCommandClick(object sender, EventArgs e)
-		{
-			var fileRefs = filesListView.SelectedItems.OfType<FileRefListViewItem>().ToArray();
-
-			var result = MsgBox.Show(this, $"Are you sure you want to delete the {fileRefs.Length:#,##0} selected file(s)?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-			if (result != DialogResult.Yes) return;
-
-			foreach (var fileRef in fileRefs)
+			foreach (var fileItem in filesListView.Items.OfType<FileRefListViewItem>())
 			{
-				try
+				if (fileItem.FileRef.FileInfo.Directory != null && folders.Contains(fileItem.FileRef.FileInfo.Directory.FullName))
 				{
-					DeleteFile(fileRef.FullPath);
-					Remove(fileRef);
-				}
-				catch (Exception)
-				{
+					fileRefAction(fileItem);
 				}
 			}
-		}
 
-		private void OpenCommandClick(object sender, EventArgs e)
-		{
-			foreach (var item in filesListView.SelectedItems.OfType<FileRefListViewItem>())
+			foreach (var duplicate in filesListView.Items.OfType<DuplicateListViewItem>().Where(d => !d.Expanded))
 			{
-				try
+				var removeRefs = duplicate.Files
+					.Where(f => f.FileInfo.Directory != null && folders.Contains(f.FileInfo.Directory.FullName))
+					.ToArray();
+
+				foreach (var fileRef in removeRefs)
 				{
-					Process.Start(new ProcessStartInfo(item.FullPath) { UseShellExecute = true });
-				}
-				catch (Exception ex)
-				{
-					MsgBox.Show(this, $"Failed to open file '{item.FullPath}'.\n\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					duplicateFileRefAction(duplicate, fileRef);
 				}
 			}
-		}
 
-		private void OpenFolderCommandClick(object sender, EventArgs e)
-		{
-			foreach (var item in filesListView.SelectedItems.OfType<FileRefListViewItem>())
-			{
-				var directory = item.FileRef.FileInfo.Directory?.FullName;
-
-				try
-				{
-					if (Directory.Exists(directory))
-					{
-						Process.Start(new ProcessStartInfo(directory) { UseShellExecute = true });
-					}
-				}
-				catch (Exception ex)
-				{
-					MsgBox.Show(this, $"Failed to open directory '{directory}'.\n\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-				}
-			}
-		}
-
-		private void KeepCommandClick(object sender, EventArgs e)
-		{
-			var keepFileRefs = filesListView.SelectedItems.OfType<FileRefListViewItem>().ToArray();
-			var duplicates = keepFileRefs.Select(f => f.Parent).ToArray();
-
-			var fileRefsCount = duplicates.SelectMany(d => d.Files).Except(keepFileRefs.Select(f => f.FileRef)).Count();
-
-			var result = MsgBox.Show(this, $"Are you sure you want to delete the {fileRefsCount:#,##0} selected file(s)?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-			if (result != DialogResult.Yes) return;
-
-			foreach (var keep in keepFileRefs)
-			{
-				try
-				{
-					foreach (var fileRef in keep.Parent.Files.Where(f => f != keep.FileRef))
-					{
-						DeleteFile(fileRef.FileInfo.FullName);
-					}
-					Remove(keep.Parent);
-				}
-				catch (Exception)
-				{
-				}
-			}
+			filesListView.EndUpdate();
 		}
 
 		private void RemoveFolders(Action<FileRefListViewItem> action1, Action<DuplicateListViewItem, FileRef> action2)
@@ -432,22 +537,6 @@ namespace DuplicateFiles
 			}
 		}
 
-		private void IgnoreFolderCommandClick(object sender, EventArgs e)
-		{
-			RemoveFolders(
-				f => {
-					Remove(f);
-				},
-				(d, f) =>
-				{
-					d.Remove(f);
-					if (d.Files.Count < 2)
-					{
-						Remove(d);
-					}
-				});
-		}
-
 		private void KeepFolderCommandClick(object sender, EventArgs e)
 		{
 		}
@@ -464,7 +553,8 @@ namespace DuplicateFiles
 			if (result != DialogResult.Yes) return;
 
 			RemoveFolders(
-				f => {
+				f =>
+				{
 					DeleteFile(f.FileRef.FileInfo.FullName);
 					Remove(f);
 				},
@@ -480,5 +570,11 @@ namespace DuplicateFiles
 		}
 
 		private void DeleteFile(string filname) => FileSystem.DeleteFile(filname, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+
+		private void ContextMenuStripItemClicked(object sender, ToolStripItemClickedEventArgs e)
+		{
+			if (e.ClickedItem is IExecutableMenuItem command)
+				command.Execute();
+		}
 	}
 }

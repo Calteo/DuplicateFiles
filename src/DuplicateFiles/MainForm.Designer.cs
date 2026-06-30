@@ -42,22 +42,11 @@
 			columnHeaderSize = new ColumnHeader();
 			columnHeaderFullname = new ColumnHeader();
 			contextMenuStrip = new ContextMenuStrip(components);
-			openCommand = new ToolStripMenuItem();
-			openFolderCommand = new ToolStripMenuItem();
-			toolStripSeparator1 = new ToolStripSeparator();
-			ignoreCommand = new ToolStripMenuItem();
-			keepCommand = new ToolStripMenuItem();
-			deleteCommand = new ToolStripMenuItem();
-			toolStripSeparator2 = new ToolStripSeparator();
-			ignoreFolderCommand = new ToolStripMenuItem();
-			keepFolderCommand = new ToolStripMenuItem();
-			deleteFolderCommand = new ToolStripMenuItem();
 			imageList = new ImageList(components);
 			folderBrowserDialog = new FolderBrowserDialog();
 			workerPool = new Toolbox.Forms.WorkerPool(components);
 			timer = new System.Windows.Forms.Timer(components);
 			layoutPanel.SuspendLayout();
-			contextMenuStrip.SuspendLayout();
 			SuspendLayout();
 			// 
 			// layoutPanel
@@ -176,76 +165,10 @@
 			// contextMenuStrip
 			// 
 			contextMenuStrip.ImageScalingSize = new Size(20, 20);
-			contextMenuStrip.Items.AddRange(new ToolStripItem[] { openCommand, openFolderCommand, toolStripSeparator1, ignoreCommand, keepCommand, deleteCommand, toolStripSeparator2, ignoreFolderCommand, keepFolderCommand, deleteFolderCommand });
 			contextMenuStrip.Name = "contextMenuStrip1";
-			contextMenuStrip.Size = new Size(169, 208);
+			contextMenuStrip.Size = new Size(61, 4);
 			contextMenuStrip.Opening += ContextMenuStripOpening;
-			// 
-			// openCommand
-			// 
-			openCommand.Name = "openCommand";
-			openCommand.Size = new Size(168, 24);
-			openCommand.Text = "Open";
-			openCommand.Click += OpenCommandClick;
-			// 
-			// openFolderCommand
-			// 
-			openFolderCommand.Name = "openFolderCommand";
-			openFolderCommand.Size = new Size(168, 24);
-			openFolderCommand.Text = "Open Folder";
-			openFolderCommand.Click += OpenFolderCommandClick;
-			// 
-			// toolStripSeparator1
-			// 
-			toolStripSeparator1.Name = "toolStripSeparator1";
-			toolStripSeparator1.Size = new Size(165, 6);
-			// 
-			// ignoreCommand
-			// 
-			ignoreCommand.Name = "ignoreCommand";
-			ignoreCommand.Size = new Size(168, 24);
-			ignoreCommand.Text = "Ignore";
-			ignoreCommand.Click += IgnoreCommandClick;
-			// 
-			// keepCommand
-			// 
-			keepCommand.Name = "keepCommand";
-			keepCommand.Size = new Size(168, 24);
-			keepCommand.Text = "Keep";
-			keepCommand.Click += KeepCommandClick;
-			// 
-			// deleteCommand
-			// 
-			deleteCommand.Name = "deleteCommand";
-			deleteCommand.Size = new Size(168, 24);
-			deleteCommand.Text = "Delete";
-			deleteCommand.Click += DeleteCommandClick;
-			// 
-			// toolStripSeparator2
-			// 
-			toolStripSeparator2.Name = "toolStripSeparator2";
-			toolStripSeparator2.Size = new Size(165, 6);
-			// 
-			// ignoreFolderCommand
-			// 
-			ignoreFolderCommand.Name = "ignoreFolderCommand";
-			ignoreFolderCommand.Size = new Size(168, 24);
-			ignoreFolderCommand.Text = "Ignore folder";
-			ignoreFolderCommand.Click += IgnoreFolderCommandClick;
-			// 
-			// keepFolderCommand
-			// 
-			keepFolderCommand.Name = "keepFolderCommand";
-			keepFolderCommand.Size = new Size(168, 24);
-			keepFolderCommand.Text = "Keep folder";
-			keepFolderCommand.Click += KeepFolderCommandClick;
-			// 
-			// deleteFolderCommand
-			// 
-			deleteFolderCommand.Name = "deleteFolderCommand";
-			deleteFolderCommand.Size = new Size(168, 24);
-			deleteFolderCommand.Text = "Delete Folder";
-			deleteFolderCommand.Click += DeleteFolderCommandClick;
+			contextMenuStrip.ItemClicked += ContextMenuStripItemClicked;
 			// 
 			// imageList
 			// 
@@ -284,7 +207,6 @@
 			Shown += MainFormShown;
 			layoutPanel.ResumeLayout(false);
 			layoutPanel.PerformLayout();
-			contextMenuStrip.ResumeLayout(false);
 			ResumeLayout(false);
 		}
 
@@ -305,16 +227,6 @@
 		private ImageList imageList;
 		private ColumnHeader columnHeaderSize;
 		private ContextMenuStrip contextMenuStrip;
-		private ToolStripMenuItem ignoreCommand;
 		internal ColumnHeader columnHeaderCount;
-		private ToolStripMenuItem deleteCommand;
-		private ToolStripMenuItem openCommand;
-		private ToolStripSeparator toolStripSeparator1;
-		private ToolStripMenuItem openFolderCommand;
-		private ToolStripMenuItem keepCommand;
-		private ToolStripSeparator toolStripSeparator2;
-		private ToolStripMenuItem ignoreFolderCommand;
-		private ToolStripMenuItem keepFolderCommand;
-		private ToolStripMenuItem deleteFolderCommand;
 	}
 }
