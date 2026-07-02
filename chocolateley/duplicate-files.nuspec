@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>duplicate-filles</id>
+    <version>0.0.1</version>
+    <title>Duplicate Files</title>
+    <authors>Calteo</authors>
+    <projectUrl>https://github.com/Calteo/DuplicateFiles</projectUrl>
+    <projectSourceUrl>https://github.com/Calteo/DuplicateFiles</projectSourceUrl>
+    <!--<iconUrl>http://cdn.rawgit.com/__REPLACE_YOUR_REPO__/master/icons/slooh-explorer.png</iconUrl>-->
+    <copyright>2026 Calteo</copyright>
+    <licenseUrl>https://github.com/Calteo/DuplicateFiles/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <tags>Duplicate Files Remove</tags>
+    <summary>Tool to identify and delete duplicate files.</summary>
+    <description>Identifies duplucate files by length and hashed. Offers multiple options to keep or remove versions.</description>  
+  </metadata>
+  <files>
+    <!-- this section controls what actually gets packaged into the Chocolatey package -->
+    <file src="tools\**" target="tools" />
+    <!--Building from Linux? You may need this instead: <file src="tools/**" target="tools" />-->
+  </files>
+</package>
