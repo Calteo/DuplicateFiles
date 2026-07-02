@@ -27,43 +27,103 @@ namespace DuplicateFiles
 				new ExecutableMenuItem<FileRefListViewItem[]>("Keep", PrepareKeep, ExecuteKeep),
 				new ExecutableMenuItem<FileRefListViewItem[]>("Delete", PrepareDelete, ExecuteDelete),
 				new ToolStripSeparator(),
-				new ExecutableMenuItem<ListViewItem[]>("Ignore folder", PrepareIgnoreFolder, ExecuteIgnoreFolder),
-				new ExecutableMenuItem<FileRefListViewItem[]>("Keep folder", PrepareKeepFolder, ExecuteKeepFolder),
-				new ExecutableMenuItem<FileRefListViewItem[]>("Delete folder", PrepareDeleteFolder, ExecuteDeleteFolder)
+				new ExecutableMenuItem<HashSet<string>>("Ignore folder", PrepareIgnoreFolder, ExecuteIgnoreFolder),
+				new ExecutableMenuItem<HashSet<string>>("Keep folder", PrepareKeepFolder, ExecuteKeepFolder),
+				new ExecutableMenuItem<HashSet<string>>("Delete folder", PrepareDeleteFolder, ExecuteDeleteFolder)
 				);
 		}
 
-		private bool PrepareDeleteFolder(out FileRefListViewItem[]? data)
+		private bool PrepareDeleteFolder(out HashSet<string>? data)
 		{
-			data = null;
-			return false;
+			var folders = GetSelectedFolders();
+
+			var completeDelete = filesListView.Items.OfType<DuplicateListViewItem>()
+				.Any(d => d.Files.All(f => folders.Contains(f.FileInfo.DirectoryName ?? "")));
+
+			data = folders;
+			return !completeDelete && data.Count > 0;
 		}
 
-		private void ExecuteDeleteFolder(FileRefListViewItem[] obj)
+		private void ExecuteDeleteFolder(HashSet<string> folders)
 		{
-			throw new NotImplementedException();
+			var count = 0;
+
+			ExecuteOnFolder(folders,
+				f => count++,
+				(d, f) => count++);
+
+			var result = MsgBox.Show(this, $"Are you sure you want to delete the {count:#,##0} selected file(s)?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+			if (result != DialogResult.Yes) return;
+
+			ExecuteOnFolder(folders,
+				f =>
+				{
+					DeleteFile(f.FileRef.FileInfo.FullName);
+					Remove(f);
+				},
+				(d, f) =>
+				{
+					DeleteFile(f.FileInfo.FullName);
+					d.Remove(f);
+					if (d.Files.Count < 2)
+					{
+						Remove(d);
+					}
+				});
+
 		}
 
-		private bool PrepareKeepFolder(out FileRefListViewItem[]? data)
+		private bool PrepareKeepFolder(out HashSet<string>? data)
 		{
-			data = null;
-			return false;
+			var folders = GetSelectedFolders();
+
+			// disallow keeping folders if any duplicate has multiple files in the selected folders
+			var badKeep = filesListView.Items.OfType<DuplicateListViewItem>()
+				.Any(d => d.Files.Count(f => folders.Contains(f.FileInfo.DirectoryName ?? "")) > 1);
+
+			data = folders;
+			return folders.Count> 0 && !badKeep;		
 		}
 
-		private void ExecuteKeepFolder(FileRefListViewItem[] obj)
+		private void ExecuteKeepFolder(HashSet<string> folders)
 		{
-			throw new NotImplementedException();
+			var count = 0;
+
+			ExecuteOnFolder(folders,
+				f => count += f.Parent.Files.Count - 1,
+				(d, f) => count += d.Files.Count - 1);
+
+			var result = MsgBox.Show(this, $"Are you sure you want to delete the {count:#,##0} selected file(s)?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+			if (result != DialogResult.Yes) return;
+
+			ExecuteOnFolder(folders,
+				f =>
+				{
+					foreach (var fileRef in f.Parent.Files.Where(fr => fr != f.FileRef))
+					{
+						DeleteFile(fileRef.FileInfo.FullName);					
+					}
+					Remove(f.Parent);
+				},
+				(d, f) =>
+				{
+					foreach (var fileRef in d.Files.Where(fr => fr != f))
+					{
+						DeleteFile(fileRef.FileInfo.FullName);						
+					}
+					Remove(d);
+				});
 		}
 
-		private bool PrepareIgnoreFolder(out ListViewItem[]? data)
+		private bool PrepareIgnoreFolder(out HashSet<string>? data)
 		{
-			data = [.. filesListView.SelectedItems.OfType<ListViewItem>()];
-			return data.Length > 0;
+			data = GetSelectedFolders();
+			return data.Count> 0;
 		}
 
-		private void ExecuteIgnoreFolder(ListViewItem[] items)
+		private void ExecuteIgnoreFolder(HashSet<string> folders)
 		{
-			ExecuteOnFolder(items,
+			ExecuteOnFolder(folders,
 				f => Remove(f),
 				(d, f) =>
 				{
@@ -471,14 +531,17 @@ namespace DuplicateFiles
 				command.Prepare();
 		}
 
-		private void ExecuteOnFolder(IEnumerable<ListViewItem> items, Action<FileRefListViewItem> fileRefAction, Action<DuplicateListViewItem, FileRef> duplicateFileRefAction)
+		private HashSet<string> GetSelectedFolders()
 		{
-			var folders = items
+			return filesListView.SelectedItems
 				.OfType<FileRefListViewItem>()
-				.Select(f => f.FileRef.FileInfo.Directory?.FullName)
-				.Where(d => d != null)
+				.Select(f => f.FileRef.FileInfo.DirectoryName)
+				.OfType<string>()
 				.ToHashSet();
+		}
 
+		private void ExecuteOnFolder(HashSet<string> folders, Action<FileRefListViewItem> fileRefAction, Action<DuplicateListViewItem, FileRef> duplicateFileRefAction)
+		{
 			filesListView.BeginUpdate();
 
 			foreach (var fileItem in filesListView.Items.OfType<FileRefListViewItem>())
