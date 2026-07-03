@@ -36,21 +36,14 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 10.0.x
-
-    # - name: Echo Version 
-    #  run: echo "Version = ${{ env.BUILD_VERSION }}"
-    
-    - name: Version Visual Studio SDK projects
-      uses: roryprimrose/set-vs-sdk-project-version@v1.0.6
-      with:
-        version: "${{ env.BUILD_VERSION }}.0"
-        assemblyVersion: "${{ env.BUILD_VERSION }}.0"
-        fileVersion: "${{ env.BUILD_VERSION }}.0"
-        informationalVersion: "${{ env.BUILD_VERSION }}.0"
     
     # Compile the solution
     - name: Compile solution
-      run: dotnet build src\DuplicateFiles.slnx -c Release -o output
+      run: dotnet build src\DuplicateFiles.slnx -c Release -o output \
+           -p:Version=${{ env.BUILD_VERSION }} \
+           -p:AssemblyVersion=${{ env.BUILD_VERSION }} \
+           -p:FileVersion=${{ env.BUILD_VERSION }} \
+           -p:InformationalVersion=${{ env.BUILD_VERSION }}
 
     - name: Remove unnecessary files
       run: del output\*.pdb,output\*.dev.json,output\*.deps.json 
@@ -68,7 +61,7 @@ jobs:
 
     steps:
     - name: Download output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         name: output
         path: output
@@ -128,7 +121,7 @@ jobs:
 
     steps:
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         name: artifact
         
