@@ -27,7 +27,7 @@ jobs:
     #  run: env
       
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
 
@@ -41,7 +41,7 @@ jobs:
     #  run: echo "Version = ${{ env.BUILD_VERSION }}"
     
     - name: Version Visual Studio SDK projects
-      uses: roryprimrose/set-vs-sdk-project-version@v1.0.3
+      uses: roryprimrose/set-vs-sdk-project-version@v1.0.6
       with:
         version: "${{ env.BUILD_VERSION }}.0"
         assemblyVersion: "${{ env.BUILD_VERSION }}.0"
@@ -56,7 +56,7 @@ jobs:
       run: del output\*.pdb,output\*.dev.json,output\*.deps.json 
     
     - name: Upload output
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: output
         path: output
@@ -81,7 +81,7 @@ jobs:
         type: 'zip'
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: artifact
         path: binary.zip
@@ -93,12 +93,12 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
 
     - name: Download output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         name: output
         path: output
@@ -116,7 +116,7 @@ jobs:
          args: pack ${{ env.CHOCOLATELY_PACKAGE }}        
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: artifact
         path: duplicate-files.${{ env.BUILD_VERSION }}.nupkg
