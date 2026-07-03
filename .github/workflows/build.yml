@@ -72,7 +72,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v6
       with:
-        name: artifact
+        name: binary
         path: binary.zip
   
   pack_chocolately:
@@ -116,7 +116,12 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Download artifacts
+    - name: Download binary artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: binary
+
+    - name: Download cocolately artifact
       uses: actions/download-artifact@v8
       with:
         name: artifact
@@ -143,7 +148,7 @@ jobs:
 
     steps:
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: artifact
     - name: Push package to chocolately
