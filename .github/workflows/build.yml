@@ -39,7 +39,8 @@ jobs:
     
     # Compile the solution
     - name: Compile solution
-      run: dotnet build src\DuplicateFiles.slnx -c Release -o output \
+      run: |
+        dotnet build src\DuplicateFiles.slnx -c Release -o output \
            -p:Version=${{ env.BUILD_VERSION }} \
            -p:AssemblyVersion=${{ env.BUILD_VERSION }} \
            -p:FileVersion=${{ env.BUILD_VERSION }} \
