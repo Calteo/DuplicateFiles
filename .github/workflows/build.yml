@@ -133,8 +133,9 @@ jobs:
       run: mv duplicate-files.${{ env.BUILD_VERSION }}.nupkg "Duplicate-Files-Chocolately-${{ env.BUILD_VERSION }}.nupkg"
 
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
+        tag: V${{ env.BUILD_VERSION }}
         files: |
           "Duplicate-Files-Binary-${{ env.BUILD_VERSION }}.zip"
           "Duplicate-Files-Chocolately-${{ env.BUILD_VERSION }}.nupkg"
