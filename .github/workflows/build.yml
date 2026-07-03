@@ -57,7 +57,7 @@ jobs:
 
     steps:
     - name: Download output
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v8
       with:
         name: output
         path: output
@@ -87,7 +87,7 @@ jobs:
         fetch-depth: 0
 
     - name: Download output
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v8
       with:
         name: output
         path: output
@@ -117,7 +117,7 @@ jobs:
 
     steps:
     - name: Download artifacts
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v8
       with:
         name: artifact
         
