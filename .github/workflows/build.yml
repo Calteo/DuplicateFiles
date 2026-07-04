@@ -11,6 +11,9 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   BUILD_VERSION: "1.0.${{ github.run_number }}"
   CHOCOLATELY_PACKAGE: "chocolateley\\duplicate-files.nuspec"
@@ -138,10 +141,10 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v3
       with:
-        tag_name: V${{ env.BUILD_VERSION }}
+        tag_name: v${{ env.BUILD_VERSION }}
         files: |
-          "Duplicate-Files-Binary-${{ env.BUILD_VERSION }}.zip"
-          "Duplicate-Files-Chocolately-${{ env.BUILD_VERSION }}.nupkg"
+          Duplicate-Files-Binary-${{ env.BUILD_VERSION }}.zip
+          Duplicate-Files-Chocolately-${{ env.BUILD_VERSION }}.nupkg
       env:
          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
