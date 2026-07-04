@@ -132,6 +132,9 @@ jobs:
     - name: Rename chocolately artifact
       run: mv duplicate-files.${{ env.BUILD_VERSION }}.nupkg "Duplicate-Files-Chocolately-${{ env.BUILD_VERSION }}.nupkg"
 
+    - name: List contents
+      run: ls
+
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v3
       with:
