@@ -135,7 +135,7 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v3
       with:
-        tag: V${{ env.BUILD_VERSION }}
+        tag_name: V${{ env.BUILD_VERSION }}
         files: |
           "Duplicate-Files-Binary-${{ env.BUILD_VERSION }}.zip"
           "Duplicate-Files-Chocolately-${{ env.BUILD_VERSION }}.nupkg"
