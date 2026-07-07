@@ -140,6 +140,7 @@
 			filesListView.View = View.Details;
 			filesListView.ColumnClick += FilesListViewColumnClick;
 			filesListView.DoubleClick += FilesListViewDoubleClick;
+			filesListView.KeyDown += FilesListViewKeyDown;
 			// 
 			// columnHeaderName
 			// 
@@ -166,7 +167,7 @@
 			// 
 			contextMenuStrip.ImageScalingSize = new Size(20, 20);
 			contextMenuStrip.Name = "contextMenuStrip1";
-			contextMenuStrip.Size = new Size(61, 4);
+			contextMenuStrip.Size = new Size(211, 32);
 			contextMenuStrip.Opening += ContextMenuStripOpening;
 			contextMenuStrip.ItemClicked += ContextMenuStripItemClicked;
 			// 

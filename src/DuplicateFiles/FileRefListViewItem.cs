@@ -5,6 +5,7 @@
 		public FileRefListViewItem(DuplicateListViewItem parent, FileRef fileRef)
 		{
 			Parent = parent;
+			Name = fileRef.FullName;
 
 			ImageKey = "file";
 			FileRef = fileRef;
@@ -19,6 +20,6 @@
 
 		public DuplicateListViewItem Parent { get; }
 		public FileRef FileRef { get; }
-		public string FullPath => FileRef.FileInfo.FullName;
+		public string FullName => FileRef.FileInfo.FullName;
 	}
 }

@@ -11,6 +11,8 @@
 			Files = [fileRef];
 			Text = fileRef.Name;
 
+			fileRef.Parent = this;
+
 			SubItems.AddRange("1");
 			SubItems.AddRange($"{fileRef.FileInfo.Length:#,##0}");
 			SubItems.AddRange("");
@@ -55,6 +57,7 @@
 		internal void Add(FileRef file)
 		{
 			Files.Add(file);
+			file.Parent = this;
 
 			SubItems[1].Text = Files.Count.ToString("#,##0");
 
